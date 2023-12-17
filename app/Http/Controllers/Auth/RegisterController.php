@@ -5,64 +5,71 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
-class LoginController extends Controller
+class RegisterController extends Controller
 {
 
-    public function index(Request $request) {
-        return view('login');
-    }
-
-    public function login(Request $request) {
+    public function admin_register(Request $request): JsonResponse
+    {
         $request->validate([
-            'phone' => ['required', 'numeric'],
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'sim_number' => ['nullable', 'string', 'max:255'],
+            'phone' => ['required', 'numeric', 'unique:users'],
             'password' => ['required'],
         ]);
 
-        $credentials = $request->only('phone', 'password');
-
-        $user = User::where('phone', $request->phone)
-            ->first();
-
-        if (Auth::attempt($credentials)) {
-            return response()->json([
-                'access_token' => $user->createToken('client')->plainTextToken,
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'sim_number' => $request->sim_number,
+                'password' => Hash::make($request->password),
+                'role_id' => Role::ROLE_ADMINISTRATOR,
             ]);
-        }
 
-        return response()->json([
-            'access_token' => null
-        ], 401);
+            return response()->json(
+                ['message' => 'Registration successful', 'user' => $user]);
+        } catch (\Exception $e) {
+            return response()->json(
+                ['error' => 'Registration failed. Please try again.'],
+                500
+            );
+        }
     }
 
     public function register(Request $request)
     {
-
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'address' => ['string', 'max:255'],
-            'sim_number' => ['string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'sim_number' => ['nullable', 'string', 'max:255'],
             'phone' => ['required', 'numeric', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'role_id' => ['required', Rule::in(Role::ROLE_OWNER, Role::ROLE_USER)],
+            'password' => ['required'],
+            'role_id' => ['required', Rule::in([Role::ROLE_OWNER, Role::ROLE_USER])],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'sim_number' => $request->sim_number,
-            'password' => Hash::make($request->password),
-            'role_id' => $request->role_id,
-        ]);
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'sim_number' => $request->sim_number,
+                'password' => Hash::make($request->password),
+                'role_id' => $request->role_id,
+            ]);
 
-        return response()->json([
-            'access_token' => $user->createToken('client')->plainTextToken,
-        ]);
+            return response()->json(['message' => 'Registration successful', 'user' => $user]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Registration failed. Please try again.'], 500);
+        }
     }
 }
