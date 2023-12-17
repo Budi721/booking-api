@@ -5,4 +5,5 @@ API Endpoint
 
 ERD Diagram
 
-![image](https://github.com/Budi721/booking-api/assets/65442450/6bfe77a2-9c8f-42ea-8007-13a599aaf01e)
+![image](https://github.com/Budi721/booking-api/assets/65442450/d3eb1e06-f653-4d65-b944-b4519b93ea2c)
+
